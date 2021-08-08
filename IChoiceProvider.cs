@@ -12,6 +12,6 @@ namespace DSharpPlus.SlashCommands
         /// <summary>
         /// Sets the choices for the slash command.
         /// </summary>
-        Task<IEnumerable<DiscordApplicationCommandOptionChoice>> Provider();
+        Task<IEnumerable<DiscordApplicationCommandOptionChoice>> Provider(ulong? guildId = null);
     }
 }

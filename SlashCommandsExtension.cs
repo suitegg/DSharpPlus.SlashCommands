@@ -146,7 +146,7 @@ namespace DSharpPlus.SlashCommands
                                     throw new ArgumentException($"The first argument must be an InteractionContext!");
                                 parameters = parameters.Skip(1).ToArray();
 
-                                var options = await ParseParameters(parameters);
+                                var options = await ParseParameters(parameters, guildid);
 
                                 var subpayload = new DiscordApplicationCommandOption(commandattribute.Name, commandattribute.Description, ApplicationCommandOptionType.SubCommand, null, null, options);
 
@@ -574,7 +574,7 @@ namespace DSharpPlus.SlashCommands
                 throw new SlashExecutionChecksFailedException(dict.Where(x => x.Value == false).Select(x => x.Key).ToList());
         }
 
-        private async Task<List<DiscordApplicationCommandOptionChoice>> GetChoiceAttributesFromProvider(IEnumerable<ChoiceProviderAttribute> customAttributes)
+        private async Task<List<DiscordApplicationCommandOptionChoice>> GetChoiceAttributesFromProvider(IEnumerable<ChoiceProviderAttribute> customAttributes, ulong? guildId = null)
         {
             var choices = new List<DiscordApplicationCommandOptionChoice>();
             foreach (var choiceProviderAttribute in customAttributes)
@@ -586,7 +586,7 @@ namespace DSharpPlus.SlashCommands
                 else
                 {
                     var instance = Activator.CreateInstance(choiceProviderAttribute.ProviderType);
-                    var result = await (Task<IEnumerable<DiscordApplicationCommandOptionChoice>>)method.Invoke(instance, null);
+                    var result = await (Task<IEnumerable<DiscordApplicationCommandOptionChoice>>)method.Invoke(instance, new object[] { guildId });
 
                     if (result.Any())
                     {
@@ -646,7 +646,7 @@ namespace DSharpPlus.SlashCommands
             return choiceattributes.Select(att => new DiscordApplicationCommandOptionChoice(att.Name, att.Value)).ToList();
         }
 
-        private async Task<List<DiscordApplicationCommandOption>> ParseParameters(ParameterInfo[] parameters)
+        private async Task<List<DiscordApplicationCommandOption>> ParseParameters(ParameterInfo[] parameters, ulong? guildId = null)
         {
             var options = new List<DiscordApplicationCommandOption>();
             foreach (var parameter in parameters)
@@ -669,7 +669,7 @@ namespace DSharpPlus.SlashCommands
 
                 if (choiceProviders.Any())
                 {
-                    choices = await GetChoiceAttributesFromProvider(choiceProviders);
+                    choices = await GetChoiceAttributesFromProvider(choiceProviders, guildId);
                 }
 
                 options.Add(new DiscordApplicationCommandOption(optionattribute.Name, optionattribute.Description, parametertype, !parameter.IsOptional, choices));
